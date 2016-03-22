@@ -1,0 +1,10 @@
+.price_table td {
+  border: 1px solid #000000;
+  padding: 2px;
+  text-align: right;
+}
+
+#expediaForm {
+  background-color: #eeeeee;
+  border-radius: 5px;
+}
