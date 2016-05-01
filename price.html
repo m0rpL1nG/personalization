@@ -1,76 +1,87 @@
-<!DOCTYPE html PUBLIC"-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <meta content="utf-8" http-equiv="encoding">
+{% extends "bootstrap_base.html" %}
+{% load static %}
 
-  <!--  using cdn links to make install simpler -->
-  
-  <!-- jquery -->
-	<script type="text/javascript" src="//code.jquery.com/jquery-1.12.0.min.js"></script>
-	<script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+{% block title %}
+Price Personalization
+{% endblock %}
 
-  <!--  moment -->
-  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment-with-locales.min.js"></script>
-  
-  <!--  bootsrap -->	
-	<link rel="stylesheet" media="all" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
-	<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-	
-	
-	<!--  datetimepicker -->
-  <link rel="stylesheet" media="all" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/3.1.4/css/bootstrap-datetimepicker.min.css" />
-  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/3.1.4/js/bootstrap-datetimepicker.min.js"></script>
-	
-  <script type="text/javascript" src="./price.js?ver=2"></script>
-  <link rel="stylesheet" media="all" type="text/css" href="./price.css?ver=2" />
-</head>
+{% block page_js %}
+  <script type="text/javascript" src="{% static 'personalization/price.js' %}?ver=2"></script>
+  <script type="text/javascript" src="{% static 'personalization/Chart.js' %}"></script>
+  <link rel="stylesheet" media="all" type="text/css" href="{% static 'personalization/price.css' %}?ver=2" />
+{% endblock %}
 
-<body>
-<div class="wrap">
-  <div class="content">
-    <div class="row">
-      <div class="col-xs-12">
-        <h1>Online Price Personalization</h1>
-        <p>This tool evaluates how different travel websites personalize pricing information for you.</p>
-      </div>
-	    <div class="col-xs-12">
-	      <p>Install <a href="./personalization.pac">this pac file</a></p>
-	      <a href="http://achtung.ccs.neu.edu/~ancsaaa/atm/setup_proxy.html" target="_blank">Instructions to install pac files.</a>
-	    </div>
-	    <div class="col-xs-12">
-			  <form id="expediaForm" method="GET" action="http://www.expedia.com/vspersonal">
-			    <div class="row">
-			      <div class="col-sm-3">The Search Engine:</div>
-			      <div class="col-sm-6">
-			        <select>
-					      <option>Expedia Hotel Search</option><br>
-					    </select>
+{% block content %}
+	<!-- Button trigger modal -->
+    <div id="menu">
+    	<span id="menuArrow" class="glyphicon glyphicon-minus-sign" aria-hidden="true" onclick="toggleMenu()"></span>
+        
+        <div id="selectContainer" style="position:absolute; top:16px; left:190px">
+            <select onchange="setGraphMode(this.value)">
+                <option value="diff">Sort by Price Difference</option>
+                <option value="rank">Sort by Expedia Rank</option>
+            </select>
+        </div>
+        
+    	<div id="buttonContainer" style="position:relative; top:8px; left:40px;"
+            <button type="button" id="detailsButton" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">
+              Enter Details
+            </button>
+        </div>
+    </div>
+    
+	<div class="col-xs-12 graphContainer">
+        <div id="subContainer">
+            <canvas id="compGraph"></canvas>
+        </div>
+        
+        <table>
+        	
+        </table>
+    
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Detail entry</h4>
+          </div>
+          <div class="modal-body">
+             
+            <div class="col-xs-12">
+            <form id="expediaForm" method="GET" action="{% url soclab.personalization.views.getExpediaHash %}">
+            <div class="row">
+            <div class="col-sm-3">Search Engine:</div>
+            <div class="col-sm-6">
+            <select>
+            <option>Expedia Hotel Search</option><br>
+            </select>
             </div>
-			    </div>
-			    
-          <div class="row"><div class="col-sm-3">Destination:</div>
+            </div>
+            
+            <div class="row"><div class="col-sm-3">Destination:</div>
             <div class="col-sm-6"><input type="text" name="destination"/></div></div>
             
-		      <div class="row"><div class="col-sm-3">Check In:</div>
+            <div class="row"><div class="col-sm-3">Check In:</div>
             <div class="col-sm-6"><input type="text" id="startDate" class="dateTime" name="startDate" value=""/></div></div>
             
-		      <div class="row"><div class="col-sm-3">Check Out:</div>
+            <div class="row"><div class="col-sm-3">Check Out:</div>
             <div class="col-sm-6"><input type="text" id="endDate" class="dateTime" name="endDate" value=""/></div></div>
             
-		      <div class="row"><div class="col-sm-3"># Adults: </div>
+            <div class="row"><div class="col-sm-3"># Adults: </div>
             <div class="col-sm-6"><input type="number" id="adults" name="adults" value="2" min="1" max="5"/></div></div>
-			  </form>
-        <br/><button id="getExpediaHash" class="btn btn-primary">Search</button>
+            </form>
+            </div>
+            
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="getExpediaHash" class="btn btn-primary" data-dismiss="modal">Search</button>
+          </div>
+        </div>
       </div>
-    </div>  
-    <hr>
-    <div class="row">
-      <div class="col-md-6"><h1>You</h1><table class="price_table" id="you"></table></div>
-      <div class="col-md-6"><h1>Generic</h1><table class="price_table" id="generic"></table></div>    
     </div>
-	</div>
+            
 </div>
-</body>
-</html>
+
+{% endblock %}
