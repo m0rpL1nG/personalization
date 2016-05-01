@@ -9,6 +9,8 @@ var n = this,
    return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
  };
  
+ $(window).resize(setGraphSize);
+ 
  var genericData = [];
  var youData = [];
 
@@ -31,6 +33,8 @@ function doSearch() {
 
 
 function getExpediaHashParam() {
+//  alert($('#expediaForm input[name="destination"]').val());
+//  return;
   // step 1: get the hash
   $.ajax({
   url:'http://www.expedia.com/vspersonal/Hotel-Search',
@@ -46,10 +50,10 @@ function getExpediaHashParam() {
   }).success(function(data, textStatus, jqXHR ) {
     searchExpedia(data);
   });
-  
 }
 
 function searchExpedia(hParam) {
+//function searchExpedia() {
   $.ajax({
     url:'http://www.expedia.com/vspersonal/Hotel-Search?inpAjax=true&responsive=true',
     method:'POST',
@@ -86,6 +90,7 @@ function searchExpediaGeneric() {
     genericData = data;
     buildTable(data, "#generic");
     compareTables(); // chain
+	buildGraph();
   });
 }
 
@@ -140,6 +145,256 @@ function compareTables() {
       $('#generic').find('.pnm_'+idx).css("color","red");      
     }
   } 
-  
 }
 
+var hl = [];
+var graphType = "diff";
+function buildGraph()
+{
+	var hotels = {};
+
+	for(var idx in youData)
+	{
+		var price = youData[idx][0];
+		var name = youData[idx][1];
+		hotels[name] = [price, 0, parseInt(idx), -1];
+	}
+	
+	for(var idx in genericData)
+	{
+		var price = genericData[idx][0];
+		var name = genericData[idx][1];
+		if(name in hotels)
+		{
+			hotels[name][1] = price;
+			hotels[name][3] = parseInt(idx);
+		}
+		else
+		{
+			hotels[name] = [0, price, -1, parseInt(idx)];
+		}
+	}
+	
+	var hotelsList = [];
+	for(hotel in hotels)
+	{
+		hotelsList.push([hotel, hotels[hotel][0], hotels[hotel][1], hotels[hotel][2], hotels[hotel][3]]);
+	}
+	hotelsList = hotelsList.sort(hotelComp);
+	hl = hotelsList;
+	
+	if(graphType == "diff")
+	{
+		graphByDiff(hotelsList);
+	}
+	else if(graphType == "rank")
+	{
+		graphByRank(youData, genericData);
+	}
+}
+
+function hotelComp(a, b)
+{
+	var diff = Math.abs(b[1] - b[2]) - Math.abs(a[1] - a[2]);
+	if(diff != 0)
+	{
+		return diff;
+	}
+	else
+	{
+		return b[1] - a[1];
+	}
+}
+
+var barChart;
+var globalHotelNames = {};
+function graphByDiff(hotels)
+{
+	Chart.defaults.global.maintainAspectRatio = false;
+	Chart.defaults.global.tooltips.callbacks.title = labelModifier;
+	//Chart.defaults.global.responsive = true;
+	var nameList = [];
+	var abbrList = [];
+	var youList = [];
+	var genericList = [];
+	
+	globalHotelNames = {};
+	
+	for(var i = 0; i < hotels.length; i++)
+	{
+		var origName = hotels[i][0];
+		var words = origName.split(" ");
+		var abbr = "";
+		for(var x = 0; x < words.length; x++)
+		{
+			var word = words[x].toUpperCase();
+			if(word[0] >= 'A' && word[0] <= 'Z')
+			{
+				abbr += word[0];
+			}
+		}
+		
+		abbr = (i+1) + ": " + abbr;
+		globalHotelNames[abbr] = origName;
+		
+		nameList.push(origName);
+		abbrList.push(abbr);
+		youList.push(hotels[i][1]);
+		genericList.push(hotels[i][2]);
+	}
+	
+	setGraphSize();
+	
+	var barData = {
+		labels : abbrList,
+		datasets : [
+			{
+				label: "Your Price",
+				backgroundColor: "rgba(54,162,235,0.2)",
+				borderColor: "rgba(54,162,235,1)",
+				borderWidth: 1,
+				hoverBackgroundColor: "rgba(54,162,235,0.4)",
+				hoverBorderColor: "rgba(54,162,235,1)",
+				data : youList
+			},
+			{
+				label: "Generic Price",
+				backgroundColor: "rgba(146,208,80,0.2)",
+				borderColor: "rgba(146,208,80,1)",
+				borderWidth: 1,
+				hoverBackgroundColor: "rgba(126,194,52,0.4)",
+				hoverBorderColor: "rgba(126,194,52,1)",
+				data : genericList
+			}
+		]
+	}
+	
+	$('#compGraph').replaceWith('<canvas id="compGraph"></canvas>');
+	var cvs = document.getElementById("compGraph").getContext("2d");
+
+	barChart = new Chart(cvs, {
+		type: 'bar',
+		data: barData
+	});
+	
+	if(menuShowing)
+	{
+		toggleMenu();
+	}
+}
+
+function graphByRank(youData, genericData)
+{
+	Chart.defaults.global.maintainAspectRatio = false;
+	Chart.defaults.global.tooltips.callbacks.title = labelModifierRank;
+	var youList = [];
+	var genericList = [];
+	var labelList = [];
+	var len = Math.max(youData.length, genericData.length);
+	globalHotelNames = {};
+	
+	for(var i = 0; i < len; i++)
+	{
+		if(i < youData.length)
+			youList.push(youData[i][0]);
+		else
+			youList.push(0);
+			
+		if(i < genericData.length)
+			genericList.push(genericData[i][0]);
+		else
+			genericList.push(0);
+			
+		var label = "# " + (i+1);
+		labelList.push(label);
+		globalHotelNames[label+'0'] = youData[i][1];
+		globalHotelNames[label+'1'] = genericData[i][1];
+	}
+	
+	setGraphSize();
+	
+	var barData = {
+		labels : labelList,
+		datasets : [
+			{
+				label: "Your Price",
+				backgroundColor: "rgba(54,162,235,0.2)",
+				borderColor: "rgba(54,162,235,1)",
+				borderWidth: 1,
+				hoverBackgroundColor: "rgba(54,162,235,0.4)",
+				hoverBorderColor: "rgba(54,162,235,1)",
+				data : youList
+			},
+			{
+				label: "Generic Price",
+				backgroundColor: "rgba(146,208,80,0.2)",
+				borderColor: "rgba(146,208,80,1)",
+				borderWidth: 1,
+				hoverBackgroundColor: "rgba(126,194,52,0.4)",
+				hoverBorderColor: "rgba(126,194,52,1)",
+				data : genericList
+			}
+		]
+	}
+	
+	$('#compGraph').replaceWith('<canvas id="compGraph"></canvas>');
+	var cvs = document.getElementById("compGraph").getContext("2d");
+
+	barChart = new Chart(cvs, {
+		type: 'bar',
+		data: barData
+	});
+	
+	if(menuShowing)
+	{
+		toggleMenu();
+	}
+}
+
+function setGraphSize()
+{
+	var height = Math.max($(window).height() - /*$("#detailsButton").height()*/ - $(".navbar").height() - 120, 400);
+	$("#subContainer").css("width", "7000px");
+	$("#subContainer").css("height", height + "px");
+	$(".graphContainer").css("overflow", "scroll");
+}
+
+function labelModifier(tooltipItems, data)
+{
+	title = data.labels[tooltipItems[0].index];
+	return globalHotelNames[title];
+}
+
+function labelModifierRank(tooltipItems, data)
+{
+	title = data.labels[tooltipItems[0].index];
+	return globalHotelNames[title + tooltipItems[0].datasetIndex];
+}
+
+var menuShowing = true;
+function toggleMenu()
+{
+	if(menuShowing)
+	{
+		$("#menuArrow").removeClass("glyphicon-minus-sign");
+		$("#menuArrow").addClass("glyphicon-plus-sign");
+		$("#menu").animate({width:'40px'}, 400);
+		menuShowing = false;
+	}
+	else
+	{
+		$("#menuArrow").removeClass("glyphicon-plus-sign");
+		$("#menuArrow").addClass("glyphicon-minus-sign");
+		$("#menu").animate({width:'400px'}, 400);
+		menuShowing = true;
+	}
+}
+
+function setGraphMode(mode)
+{
+	if(mode != graphType)
+	{
+		graphType = mode;
+		buildGraph();
+	}
+}

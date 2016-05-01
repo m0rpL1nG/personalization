@@ -8,3 +8,26 @@
   background-color: #eeeeee;
   border-radius: 5px;
 }
+
+.graphContainer {
+	overflow-y:hidden !important;
+}
+
+#menu {
+	position:absolute;
+	top:60px;
+	left:0px;
+	padding:0px;
+	width:400px;
+	height:60px;
+	background-color:#F7932C;
+	z-index:3;
+	overflow:hidden;
+}
+
+#menuArrow {
+	position:absolute;
+	top:15px;
+	font-size:36px;
+	cursor:pointer;
+}
