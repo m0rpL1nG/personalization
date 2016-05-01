@@ -1,17 +1,41 @@
-{% extends "bootstrap_base.html" %}
-{% load static %}
+<!DOCTYPE html PUBLIC"-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
 
-{% block title %}
-Price Personalization
-{% endblock %}
+  <!--  using cdn links to make install simpler -->
+  
+  <!-- jquery -->
+	<script type="text/javascript" src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 
-{% block page_js %}
-  <script type="text/javascript" src="{% static 'personalization/price.js' %}?ver=2"></script>
-  <script type="text/javascript" src="{% static 'personalization/Chart.js' %}"></script>
-  <link rel="stylesheet" media="all" type="text/css" href="{% static 'personalization/price.css' %}?ver=2" />
-{% endblock %}
+  <!--  moment -->
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment-with-locales.min.js"></script>
+  
+  <!--  bootsrap -->	
+	<link rel="stylesheet" media="all" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+	<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	
+	
+	<!--  datetimepicker -->
+  <link rel="stylesheet" media="all" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/3.1.4/css/bootstrap-datetimepicker.min.css" />
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/3.1.4/js/bootstrap-datetimepicker.min.js"></script>
+	
+  <!--<script type="text/javascript" src="./price.js?ver=2"></script>-->
+  <script type="text/javascript" src="./price.js?ver=2"></script>
+  <script type="text/javascript" src="./Chart.js?ver=2"></script>
+  
+  <link rel="stylesheet" media="all" type="text/css" href="./price.css?ver=2" />
+  
+</head>
 
-{% block content %}
+<body>    
+	<div class="navbar">
+    	<a href="https://volunteerscience.com"><img src="./logo-transparent.png" class="navbar-brand" alt="Volunteer Science"/></a>
+    </div>
+
 	<!-- Button trigger modal -->
     <div id="menu">
     	<span id="menuArrow" class="glyphicon glyphicon-minus-sign" aria-hidden="true" onclick="toggleMenu()"></span>
@@ -84,4 +108,5 @@ Price Personalization
             
 </div>
 
-{% endblock %}
+</body>
+</html>
